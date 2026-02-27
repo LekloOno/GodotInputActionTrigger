@@ -8,8 +8,9 @@ using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
 
 [Tool]
-public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction<T> where T: class, IInput
+public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T> where T: class, IInput
 {
+    public ulong LastInput {get; private set;}
     private Func<T, bool> _triggerHandler;
     private IBuffer<T> _buffer;
     
@@ -32,7 +33,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction<T> where
     }
 
 
-    private bool AutonomousTrigger(T input)
+    private bool DoTrigger(T input)
     {
         foreach (IAction<T> action in _actions)
             if (action.Do(input))
@@ -41,10 +42,19 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction<T> where
         return false;
     }
 
+    public bool Do()
+    {
+        if (!_buffer.Consume(out T input))
+            return false;
+
+        return DoTrigger(input);        
+    }
+
     public bool Do(T input)
     {
+        LastInput = PHX_Time.ScaledTicksMsec;
         bool handled = _triggerHandler(input);
-        
+
         if (handled)
             return true;
 
@@ -57,11 +67,11 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction<T> where
         if (GetParent() is ITrigger)
             _triggerHandler = (_) => false;
         else
-            _triggerHandler = AutonomousTrigger;
+            _triggerHandler = DoTrigger;
     }
 
     protected override void UnparentSpec()
     {
-        _triggerHandler = AutonomousTrigger;
+        _triggerHandler = DoTrigger;
     }
 }
