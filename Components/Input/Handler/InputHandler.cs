@@ -1,0 +1,67 @@
+namespace GIAT.Components.Input.Handler;
+
+using System;
+using Godot;
+
+using GIAT.Interface;
+using GIAT.Components.Trigger;
+using GIAT.Components.Input.Buffer;
+
+[Tool]
+public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction<T> where T: class, IInput
+{
+    private Func<T, bool> _triggerHandler;
+    private IBuffer<T> _buffer;
+    
+    public BufferData<T> _bufferData;
+    public BufferData<T> BufferData
+    {
+        get => _bufferData;
+        protected set
+        {
+            if (_bufferData == value)
+                return;
+
+            _bufferData = value;
+            
+            if (value == null)
+                _buffer = null;
+            else
+                _buffer = value.Build();
+        }
+    }
+
+
+    private bool AutonomousTrigger(T input)
+    {
+        foreach (IAction<T> action in _actions)
+            if (action.Do(input))
+                return true;
+        
+        return false;
+    }
+
+    public bool Do(T input)
+    {
+        bool handled = _triggerHandler(input);
+        
+        if (handled)
+            return true;
+
+        _buffer.Buffer(input);
+        return false;
+    }
+
+    protected override void CheckParentSpec()
+    {
+        if (GetParent() is ITrigger)
+            _triggerHandler = (_) => false;
+        else
+            _triggerHandler = AutonomousTrigger;
+    }
+
+    protected override void UnparentSpec()
+    {
+        _triggerHandler = AutonomousTrigger;
+    }
+}
