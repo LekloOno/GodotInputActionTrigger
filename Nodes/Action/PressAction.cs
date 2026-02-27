@@ -1,10 +1,38 @@
 namespace GIAT.Nodes.Action;
 
 using GIAT.Interface;
+using GIAT.Nodes.Input.Type;
 using Godot;
 
 [GlobalClass]
-public abstract partial class PressAction : Node, IAction<PressAction>
+public abstract partial class PressAction : Node, IAction<PressInput>
 {
-    public abstract bool Do(PressAction input);
+    public event System.Action OnStart;
+    public event System.Action OnStop;
+    public bool Do(PressInput input)
+    {
+        return input.state switch
+        {
+            PressState.Start => DoStart(),
+            PressState.Stop => DoStop(),
+            _ => false,
+        };
+    }
+
+    private bool DoStart()
+    {
+        bool handled = Start();
+        OnStart?.Invoke();
+        return handled;
+    }
+
+    private bool DoStop()
+    {
+        bool handled = Stop();
+        OnStop?.Invoke();
+        return handled;
+    }
+
+    public abstract bool Start();
+    public abstract bool Stop();
 }
