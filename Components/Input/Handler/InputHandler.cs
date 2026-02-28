@@ -26,7 +26,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
             _bufferData = value;
             
             if (value == null)
-                _buffer = null;
+                _buffer = new EmptyBuffer<T>();
             else
                 _buffer = value.Build();
         }
