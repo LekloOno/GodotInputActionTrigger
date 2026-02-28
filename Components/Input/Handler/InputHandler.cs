@@ -28,8 +28,15 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     private IBuffer<T> _buffer = new EmptyBuffer<T>();
     
     public BufferData _bufferData;
+
+    /// <summary>
+    /// It is named buffer although it is the buffer data because the buffer itself
+    /// is not exposed to the editor. <br/>
+    /// <br/>
+    /// It implictly represents the buffer for the inspector-land.
+    /// </summary>
     [Export]
-    public BufferData BufferData
+    public BufferData Buffer
     {
         get => _bufferData;
         protected set

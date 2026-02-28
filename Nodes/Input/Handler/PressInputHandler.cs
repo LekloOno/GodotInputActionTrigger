@@ -11,14 +11,15 @@ using GIAT.Components.Input.Buffer;
 [GlobalClass, Tool]
 public partial class PressInputHandler : InputHandler<PressInput>
 {
-    [Export] public PressBufferData PressBufferData = new();
+    [Export]
+    public PressBufferData PressBuffer = new();
 
     public ulong LastInputStart {get; private set;}
     public ulong LastInputStop {get; private set;}
     public bool Active {get; private set;}
 
     protected override IBuffer<PressInput> Build()
-        => new PressBuffer(BufferData.Build<PressInput>(), PressBufferData);
+        => new PressBuffer(Buffer.Build<PressInput>(), PressBuffer);
 
     public override void DoSpec(PressInput input)
     {
