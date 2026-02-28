@@ -17,11 +17,13 @@ public class SimpleBuffer<T, D>(D data) : IBuffer<T>
         => _lifeTime != 0 
         && PHX_Time.ScaledTicksMsec - _timeStamp > _lifeTime;
 
-    private void Clear()
+    public void Clear()
     {
         _buffered = default;
         _containsInput = false;
     }
+
+    public void Clear(T _) => Clear();
 
     public virtual bool Buffer(T input)
     {

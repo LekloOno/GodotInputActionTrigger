@@ -23,6 +23,15 @@ public interface IBuffer<T> where T: IInput
     /// <returns>false if there's no input to peak, meaning `input` is not valid, true otherwise.</returns>
     bool Peak([MaybeNullWhen(false)] out T input);
     /// <summary>
+    /// Clears the buffer.
+    /// </summary>
+    void Clear();
+    /// <summary>
+    /// Clears the provided input from the buffer.
+    /// </summary>
+    /// <param name="input"></param>
+    void Clear(T input);
+    /// <summary>
     /// Checks if the buffer is empty
     /// </summary>
     /// <returns>Whether this buffer is empty or not.</returns>

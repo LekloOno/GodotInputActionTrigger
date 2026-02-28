@@ -19,4 +19,7 @@ public class EmptyBuffer<T> : IBuffer<T>
 
     public bool Peak(out T input) =>
         Consume(out input);
+
+    public void Clear() {}
+    public void Clear(T input) {}
 }

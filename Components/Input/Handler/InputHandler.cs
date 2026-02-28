@@ -10,6 +10,11 @@ using GIAT.Components.Input.Buffer;
 [Tool]
 public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T> where T: IInput
 {
+    /// <summary>
+    /// Makes so only successfull call to Do() consume used buffer input.
+    /// </summary>
+    [Export] private bool _consumeSuccessOnly = true;
+
     public ulong LastInput {get; private set;}
     private Func<T, bool> _triggerHandler;
     private IBuffer<T> _buffer;
@@ -32,8 +37,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         }
     }
 
-
-    private bool DoTrigger(T input)
+    private bool TriggerActions(T input)
     {
         foreach (IAction<T> action in _actions)
             if (action.Do(input))
@@ -42,12 +46,32 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         return false;
     }
 
-    public bool Do()
+    private bool SuccessDo()
+    {
+        if (!_buffer.Peak(out T input))
+            return false;
+
+        bool handled = TriggerActions(input);
+
+        if (handled)
+            _buffer.Clear(input);
+
+        return handled;
+    }
+
+    private bool SimpleDo()
     {
         if (!_buffer.Consume(out T input))
             return false;
 
-        return DoTrigger(input);        
+        return TriggerActions(input);
+    }
+
+    public bool Do()
+    {
+        if (_consumeSuccessOnly)
+            return SuccessDo();
+        return SimpleDo();
     }
 
     public bool Do(T input)
@@ -70,11 +94,11 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         if (GetParent() is ITrigger)
             _triggerHandler = (_) => false;
         else
-            _triggerHandler = DoTrigger;
+            _triggerHandler = TriggerActions;
     }
 
     protected override void UnparentSpec()
     {
-        _triggerHandler = DoTrigger;
+        _triggerHandler = TriggerActions;
     }
 }
