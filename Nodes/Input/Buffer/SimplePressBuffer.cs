@@ -7,7 +7,7 @@ public class SimplePressBuffer(SimplePressBufferData data): SimpleBuffer<PressIn
 {
     public override bool Buffer(PressInput input)
     {
-        if (_data.IgnoreStop && input.state == PressState.Stop)
+        if (!_data.Buffered.HasFlag(input.state))
             return false;
         
         return base.Buffer(input);
