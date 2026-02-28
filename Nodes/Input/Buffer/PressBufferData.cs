@@ -6,7 +6,7 @@ using GIAT.Interface;
 using GIAT.Components.Input.Buffer;
 using GIAT.Nodes.Input.Type;
 
-[GlobalClass]
+[GlobalClass, Tool]
 public abstract partial class PressBufferData : Resource, BufferData<PressInput>
 {
     public abstract IBuffer<PressInput> Build();
