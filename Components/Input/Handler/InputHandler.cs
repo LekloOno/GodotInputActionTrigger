@@ -99,13 +99,16 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     {
         DoSpec(input);
         LastInputStamp = PHX_Time.ScaledTicksMsec;
+        // Buffer in preamble, to ensure a consistent
+        // produce - consume semantic.
+        _buffer.Buffer(input);
         bool handled = IsTrigger && TriggerActions(input);
 
-        if (handled)
-            return true;
+        if (!handled)
+            return false;
 
-        _buffer.Buffer(input);
-        return false;
+        _buffer.Pop();
+        return true;
     }
 
     public abstract void DoSpec(T input);
