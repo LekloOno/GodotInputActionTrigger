@@ -5,32 +5,26 @@ using Godot;
 using GIAT.Interface;
 using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
+using Godot.Collections;
 
 [Tool]
 public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T> where T: IInput
 {
+    /// <summary>
+    /// Make the input trigger its actions autonomously.
+    /// </summary>
+    private bool _autonomous = true;
     /// <summary>
     /// Makes so only successfull call to Do() consume used buffer input.
     /// </summary>
     [Export]
     private bool _consumeSuccessOnly = true;
 
-    private bool _autonomous = true;
-    [Export]
-    public bool Autonomous
-    {
-        get => _autonomous;
-        set
-        {
-            if (value == _autonomous)
-                return;
+    private bool IsTrigger => _autonomous && _rootTrigger;
 
-            _autonomous = value
-                && GetParent() is not ITrigger;                
-        }
-    }
+    private bool _rootTrigger = false;
 
-    public ulong LastInput {get; private set;}
+    public ulong LastInputStamp {get; private set;}
     private IBuffer<T> _buffer;
     
     public BufferData<T> _bufferData;
@@ -49,6 +43,11 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
             else
                 _buffer = value.Build();
         }
+    }
+
+    public override void _Ready()
+    {
+        GD.Print(IsTrigger);
     }
 
     private bool TriggerActions(T input)
@@ -91,8 +90,8 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     public bool Do(T input)
     {
         DoSpec(input);
-        LastInput = PHX_Time.ScaledTicksMsec;
-        bool handled = _autonomous && TriggerActions(input);
+        LastInputStamp = PHX_Time.ScaledTicksMsec;
+        bool handled = IsTrigger && TriggerActions(input);
 
         if (handled)
             return true;
@@ -104,12 +103,43 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     public abstract void DoSpec(T input);
 
     protected override void CheckParentSpec()
-    {
-        _autonomous = GetParent() is not ITrigger;
-    }
+        => _rootTrigger = GetParent() is not ITrigger;
 
     protected override void UnparentSpec()
+        => _rootTrigger = true;
+
+
+    // Inspector
+    public override Array<Dictionary> _GetPropertyList()
     {
-        _autonomous = true;
+        Array<Dictionary> properties = [];
+        
+        if (GetParent() is not ITrigger)
+        {
+            properties.Add(new Dictionary
+            {
+                { "name", "_autonomous" },
+                { "type", (int)Variant.Type.Bool },
+                { "usage", (int)PropertyUsageFlags.Default }
+            });
+        }
+
+        return properties;
+    }
+
+    public override bool _PropertyCanRevert(StringName property)
+    {
+        if (property == "_autonomous")
+            return _autonomous != true;
+
+        return false;
+    }
+
+    public override Variant _PropertyGetRevert(StringName property)
+    {
+        if (property == "_autonomous")
+            return true;
+
+        return default;
     }
 }

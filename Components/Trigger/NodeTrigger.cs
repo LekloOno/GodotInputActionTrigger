@@ -53,6 +53,12 @@ public abstract partial class NodeTrigger<T> : FreeTrigger where T: IInput
 
     protected abstract void UnparentSpec();
 
+    public override void _EnterTree()
+    {
+        CheckChildren();
+        CheckParent();
+    }
+
     public override void _Notification(int what)
     {
         switch ((long) what)
@@ -71,5 +77,6 @@ public abstract partial class NodeTrigger<T> : FreeTrigger where T: IInput
         }
 
         UpdateConfigurationWarnings();
+        NotifyPropertyListChanged();
     }
 }
