@@ -2,7 +2,7 @@ namespace GIAT.Components.Input.Buffer;
 
 using GIAT.Interface;
 
-public interface SimpleBufferData<T> : BufferData<T> where T : class, IInput
+public interface SimpleBufferData<T> : BufferData<T> where T : IInput
 {
     ulong LifeTime {get;}
 }

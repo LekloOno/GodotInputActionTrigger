@@ -6,7 +6,7 @@ using Godot;
 using GIAT.Interface;
 
 [Tool]
-public abstract partial class NodeTrigger<T> : FreeTrigger where T: class, IInput
+public abstract partial class NodeTrigger<T> : FreeTrigger where T: IInput
 {
     protected List<IAction<T>> _actions = [];
 

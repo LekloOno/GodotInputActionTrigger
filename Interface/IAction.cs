@@ -1,6 +1,6 @@
 namespace GIAT.Interface;
 
-public interface IAction<T> where T: class, IInput
+public interface IAction<T> where T: IInput
 {
     bool Do(T input);
 }

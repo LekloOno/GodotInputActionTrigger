@@ -8,7 +8,7 @@ using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
 
 [Tool]
-public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T> where T: class, IInput
+public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T> where T: IInput
 {
     public ulong LastInput {get; private set;}
     private Func<T, bool> _triggerHandler;

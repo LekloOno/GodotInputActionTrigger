@@ -3,14 +3,14 @@ namespace GIAT.Components.Input.Buffer;
 using GIAT.Interface;
 
 public class EmptyBuffer<T> : IBuffer<T>
-    where T : class, IInput
+    where T : IInput
 {
     public bool Buffer(T input)
         => false;
 
     public bool Consume(out T input)
     {
-        input = null;
+        input = default;
         return false;   
     }
 

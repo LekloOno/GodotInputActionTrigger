@@ -10,4 +10,4 @@ public enum PressState
     Stop = 0b10,
 }
 
-public record PressInput(PressState state) : IInput;
+public readonly record struct PressInput(PressState state) : IInput;

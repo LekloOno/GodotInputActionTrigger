@@ -1,5 +1,7 @@
 namespace GIAT.Interface;
 
+using System.Diagnostics.CodeAnalysis;
+
 public interface IBuffer<T> where T: IInput
 {
     /// <summary>
@@ -11,15 +13,15 @@ public interface IBuffer<T> where T: IInput
     /// <summary>
     /// Tries to consume the buffer, and return the underlying input.
     /// </summary>
-    /// <param name="input">The (possibly null) consumed input.</param>
-    /// <returns>false if there's no input to consume, meaning `input` is null, true otherwise.</returns>
-    bool Consume(out T input);
+    /// <param name="input">The (possibly invalid) consumed input.</param>
+    /// <returns>false if there's no input to consume, meaning `input` is not valid, true otherwise.</returns>
+    bool Consume([MaybeNullWhen(false)] out T input);
     /// <summary>
     /// Retrieves a buffered input without consuming it.
     /// </summary>
-    /// <param name="input">The (possibly null) peaked input.</param>
-    /// <returns>false if there's no input to peak, meaning `input` is null, true otherwise.</returns>
-    bool Peak(out T input);
+    /// <param name="input">The (possibly invalid) peaked input.</param>
+    /// <returns>false if there's no input to peak, meaning `input` is not valid, true otherwise.</returns>
+    bool Peak([MaybeNullWhen(false)] out T input);
     /// <summary>
     /// Checks if the buffer is empty
     /// </summary>

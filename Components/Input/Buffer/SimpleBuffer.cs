@@ -3,47 +3,55 @@ namespace GIAT.Components.Input.Buffer;
 using GIAT.Interface;
 
 public class SimpleBuffer<T, D>(D data) : IBuffer<T>
-    where T : class, IInput
+    where T : IInput
     where D: SimpleBufferData<T>
 {
     protected readonly D _data = data;
     private ulong _lifeTime => _data.LifeTime;
-    private T _buffered;
+    private T _buffered = default;
+    public bool _containsInput = false;
 
-    private ulong _bufferTime;
+    private ulong _timeStamp;
 
     private bool Expired()
         => _lifeTime != 0 
-        && PHX_Time.ScaledTicksMsec - _bufferTime > _lifeTime;
+        && PHX_Time.ScaledTicksMsec - _timeStamp > _lifeTime;
 
-    private T Buffered()
+    private void Clear()
     {
-        if (Expired())
-            _buffered = null;
-
-        return _buffered;
+        _buffered = default;
+        _containsInput = false;
     }
 
     public virtual bool Buffer(T input)
     {
-        _bufferTime = PHX_Time.ScaledTicksMsec;
+        if (input is null)
+            return false;
+
+        _timeStamp = PHX_Time.ScaledTicksMsec;
         _buffered = input;
+        _containsInput = true;
         return true;
     }
 
     public bool Consume(out T input)
     {
-        input = Buffered();
-        _buffered = null;
-        return input == null;
-    }
+        if (!Peak(out input))
+            return false;
 
-    public bool IsEmpty() =>
-        Expired() || _buffered == null;
+        Clear();
+        return true;
+    }
 
     public bool Peak(out T input)
     {
-        input = Buffered();
-        return input == null;
+        input = _buffered;
+        if (Expired())
+            Clear();
+
+        return _containsInput;
     }
+
+    public bool IsEmpty() =>
+        Expired() || !_containsInput;
 }
