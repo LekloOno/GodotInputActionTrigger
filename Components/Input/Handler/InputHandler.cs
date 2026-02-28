@@ -67,7 +67,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         bool handled = TriggerActions(input);
 
         if (handled)
-            _buffer.Clear(input);
+            _buffer.Pop();
 
         return handled;
     }

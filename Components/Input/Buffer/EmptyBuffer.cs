@@ -21,5 +21,5 @@ public class EmptyBuffer<T> : IBuffer<T>
         Consume(out input);
 
     public void Clear() {}
-    public void Clear(T input) {}
+    public void Pop() {}
 }

@@ -7,7 +7,6 @@ public class SimpleBuffer<T, D>(D data) : IBuffer<T>
     where D: SimpleBufferData<T>
 {
     protected readonly D _data = data;
-    private ulong _lifeTime => _data.LifeTime;
     private T _buffered = default;
     public bool _containsInput = false;
 
@@ -23,7 +22,7 @@ public class SimpleBuffer<T, D>(D data) : IBuffer<T>
         _containsInput = false;
     }
 
-    public void Clear(T _) => Clear();
+    public void Pop() => Clear();
 
     public virtual bool Buffer(T input)
     {

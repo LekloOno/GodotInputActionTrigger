@@ -27,10 +27,10 @@ public interface IBuffer<T> where T: IInput
     /// </summary>
     void Clear();
     /// <summary>
-    /// Clears the provided input from the buffer.
+    /// Clears one input from the buffer.
     /// </summary>
     /// <param name="input"></param>
-    void Clear(T input);
+    void Pop();
     /// <summary>
     /// Checks if the buffer is empty
     /// </summary>
