@@ -14,8 +14,8 @@ public class SimpleBuffer<T, D>(D data) : IBuffer<T>
     private ulong _timeStamp;
 
     private bool Expired()
-        => _lifeTime != 0 
-        && PHX_Time.ScaledTicksMsec - _timeStamp > _lifeTime;
+        => _data.UseLifeTime 
+        && PHX_Time.ScaledTicksMsec - _timeStamp > _data.LifeTime;
 
     public void Clear()
     {
