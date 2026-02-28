@@ -52,6 +52,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
 
     public bool Do(T input)
     {
+        DoSpec(input);
         LastInput = PHX_Time.ScaledTicksMsec;
         bool handled = _triggerHandler(input);
 
@@ -61,6 +62,8 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         _buffer.Buffer(input);
         return false;
     }
+
+    public abstract void DoSpec(T input);
 
     protected override void CheckParentSpec()
     {
