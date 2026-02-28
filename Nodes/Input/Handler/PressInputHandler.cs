@@ -6,7 +6,6 @@ using GIAT.Components.Input.Handler;
 using GIAT.Nodes.Input.Type;
 using GIAT.Nodes.Input.Buffer;
 using GIAT.Interface;
-using GIAT.Components.Input.Buffer;
 
 [GlobalClass, Tool]
 public partial class PressInputHandler : InputHandler<PressInput>
@@ -45,4 +44,14 @@ public partial class PressInputHandler : InputHandler<PressInput>
     }
 
     protected override void CheckChildrenSpec(){}
+
+    protected override void Process(InputEvent @event)
+    {
+        if (@event.IsEcho())
+            return;
+        if (@event.IsPressed())
+            Do(PressInput.Start);
+        else if (@event.IsReleased())
+            Do(PressInput.Stop);
+    }
 }

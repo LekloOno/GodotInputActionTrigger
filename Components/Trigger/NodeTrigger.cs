@@ -53,13 +53,13 @@ public abstract partial class NodeTrigger<T> : FreeTrigger
 
     protected abstract void UnparentSpec();
 
-    public override void _EnterTree()
+    public override sealed void _EnterTree()
     {
         CheckChildren();
         CheckParent();
     }
 
-    public override void _Notification(int what)
+    public override sealed void _Notification(int what)
     {
         switch ((long) what)
         {
