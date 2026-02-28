@@ -1,6 +1,5 @@
 namespace GIAT.Components.Input.Handler;
 
-using System;
 using Godot;
 
 using GIAT.Interface;
@@ -13,10 +12,25 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     /// <summary>
     /// Makes so only successfull call to Do() consume used buffer input.
     /// </summary>
-    [Export] private bool _consumeSuccessOnly = true;
+    [Export]
+    private bool _consumeSuccessOnly = true;
+
+    private bool _autonomous = true;
+    [Export]
+    public bool Autonomous
+    {
+        get => _autonomous;
+        set
+        {
+            if (value == _autonomous)
+                return;
+
+            _autonomous = value
+                && GetParent() is not ITrigger;                
+        }
+    }
 
     public ulong LastInput {get; private set;}
-    private Func<T, bool> _triggerHandler;
     private IBuffer<T> _buffer;
     
     public BufferData<T> _bufferData;
@@ -78,7 +92,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     {
         DoSpec(input);
         LastInput = PHX_Time.ScaledTicksMsec;
-        bool handled = _triggerHandler(input);
+        bool handled = _autonomous && TriggerActions(input);
 
         if (handled)
             return true;
@@ -91,14 +105,11 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
 
     protected override void CheckParentSpec()
     {
-        if (GetParent() is ITrigger)
-            _triggerHandler = (_) => false;
-        else
-            _triggerHandler = TriggerActions;
+        _autonomous = GetParent() is not ITrigger;
     }
 
     protected override void UnparentSpec()
     {
-        _triggerHandler = TriggerActions;
+        _autonomous = true;
     }
 }
