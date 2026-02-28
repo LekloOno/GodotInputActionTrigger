@@ -11,10 +11,10 @@ public abstract partial class PressAction : Node, IAction<PressInput>
     public event System.Action OnStop;
     public bool Do(PressInput input)
     {
-        return input.state switch
+        return input switch
         {
-            PressState.Start => DoStart(),
-            PressState.Stop => DoStop(),
+            PressInput.Start => DoStart(),
+            PressInput.Stop => DoStop(),
             _ => false,
         };
     }

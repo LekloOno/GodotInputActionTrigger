@@ -3,7 +3,6 @@ namespace GIAT.Components.Input.Buffer;
 using GIAT.Interface;
 
 public class EmptyBuffer<T> : IBuffer<T>
-    where T : IInput
 {
     public bool Buffer(T input)
         => false;

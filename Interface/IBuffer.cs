@@ -2,7 +2,7 @@ namespace GIAT.Interface;
 
 using System.Diagnostics.CodeAnalysis;
 
-public interface IBuffer<T> where T: IInput
+public interface IBuffer<T>
 {
     /// <summary>
     /// Tries to buffer the input.

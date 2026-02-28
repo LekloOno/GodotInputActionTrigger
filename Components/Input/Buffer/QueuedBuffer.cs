@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using GIAT.Interface;
 
 public class QueuedBuffer<T>(QueuedBufferData data) : IBuffer<T>
-    where T : IInput
 {
     protected readonly QueuedBufferData _data = data;
     private Queue<(T, ulong)> _buffered = new();

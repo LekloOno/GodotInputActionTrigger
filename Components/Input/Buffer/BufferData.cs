@@ -6,5 +6,5 @@ using Godot;
 [GlobalClass]
 public abstract partial class BufferData: Resource
 {
-    public abstract IBuffer<T> Build<T>() where T : IInput;
+    public abstract IBuffer<T> Build<T>();
 }

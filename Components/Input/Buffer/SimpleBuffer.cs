@@ -3,7 +3,6 @@ namespace GIAT.Components.Input.Buffer;
 using GIAT.Interface;
 
 public class SimpleBuffer<T> : IBuffer<T>
-    where T : IInput
 {
     public SimpleBuffer(SimpleBufferData data)
     {

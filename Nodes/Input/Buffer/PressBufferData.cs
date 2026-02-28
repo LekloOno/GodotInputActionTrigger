@@ -8,5 +8,5 @@ using GIAT.Nodes.Input.Type;
 public partial class PressBufferData : Resource
 {
     [Export(PropertyHint.Flags)]
-    public PressState Buffered {get; private set;} = PressState.Start | PressState.Stop;
+    public PressInput Buffered {get; private set;} = PressInput.Start | PressInput.Stop;
 }

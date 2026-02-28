@@ -22,13 +22,13 @@ public partial class PressInputHandler : InputHandler<PressInput>
 
     public override void DoSpec(PressInput input)
     {
-        switch (input.state)
+        switch (input)
         {
-            case PressState.Start:
+            case PressInput.Start:
                 LastInputStart = PHX_Time.ScaledTicksMsec;
                 Active = true;
                 break;
-            case PressState.Stop:
+            case PressInput.Stop:
                 LastInputStop = PHX_Time.ScaledTicksMsec;
                 Active = false;
                 break;

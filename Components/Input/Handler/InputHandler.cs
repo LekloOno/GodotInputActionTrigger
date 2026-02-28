@@ -8,7 +8,7 @@ using GIAT.Components.Input.Buffer;
 using Godot.Collections;
 
 [Tool]
-public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T> where T: IInput
+public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T>
 {
     /// <summary>
     /// Make the input trigger its actions autonomously.

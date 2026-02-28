@@ -8,7 +8,7 @@ public class PressBuffer(IBuffer<PressInput> buffer, PressBufferData data): IBuf
 {
     public bool Buffer(PressInput input)
     {
-        if (!data.Buffered.HasFlag(input.state))
+        if (!data.Buffered.HasFlag(input))
             return false;
         
         return buffer.Buffer(input);
