@@ -25,7 +25,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     private bool _rootTrigger = false;
 
     public ulong LastInputStamp {get; private set;}
-    private IBuffer<T> _buffer;
+    private IBuffer<T> _buffer = new EmptyBuffer<T>();
     
     public BufferData<T> _bufferData;
     public BufferData<T> BufferData
