@@ -2,12 +2,11 @@ namespace GIAT.Nodes.Input.Buffer;
 
 using Godot;
 
-using GIAT.Interface;
-using GIAT.Components.Input.Buffer;
 using GIAT.Nodes.Input.Type;
 
 [GlobalClass, Tool]
-public abstract partial class PressBufferData : Resource, BufferData<PressInput>
+public partial class PressBufferData : Resource
 {
-    public abstract IBuffer<PressInput> Build();
+    [Export(PropertyHint.Flags)]
+    public PressState Buffered {get; private set;} = PressState.Start | PressState.Stop;
 }

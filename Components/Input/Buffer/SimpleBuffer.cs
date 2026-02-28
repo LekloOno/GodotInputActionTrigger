@@ -2,11 +2,20 @@ namespace GIAT.Components.Input.Buffer;
 
 using GIAT.Interface;
 
-public class SimpleBuffer<T, D>(D data) : IBuffer<T>
+public class SimpleBuffer<T> : IBuffer<T>
     where T : IInput
-    where D: SimpleBufferData<T>
 {
-    protected readonly D _data = data;
+    public SimpleBuffer(SimpleBufferData data)
+    {
+        _data = data;
+    }
+
+    public SimpleBuffer()
+    {
+        _data = null!;
+    }
+
+    protected readonly SimpleBufferData _data;
     private T _buffered = default;
     public bool _containsInput = false;
 

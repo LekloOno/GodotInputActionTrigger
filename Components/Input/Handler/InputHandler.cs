@@ -27,8 +27,9 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     public ulong LastInputStamp {get; private set;}
     private IBuffer<T> _buffer = new EmptyBuffer<T>();
     
-    public BufferData<T> _bufferData;
-    public BufferData<T> BufferData
+    public BufferData _bufferData;
+    [Export]
+    public BufferData BufferData
     {
         get => _bufferData;
         protected set
@@ -41,14 +42,12 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
             if (value == null)
                 _buffer = new EmptyBuffer<T>();
             else
-                _buffer = value.Build();
+                _buffer = Build();
         }
     }
 
-    public override void _Ready()
-    {
-        GD.Print(IsTrigger);
-    }
+    protected virtual IBuffer<T> Build()
+        => _bufferData.Build<T>();
 
     private bool TriggerActions(T input)
     {

@@ -5,24 +5,20 @@ using Godot;
 using GIAT.Components.Input.Handler;
 using GIAT.Nodes.Input.Type;
 using GIAT.Nodes.Input.Buffer;
+using GIAT.Interface;
+using GIAT.Components.Input.Buffer;
 
 [GlobalClass, Tool]
 public partial class PressInputHandler : InputHandler<PressInput>
 {
-    [Export] public PressBufferData PressBufferData
-    {
-        get
-        {
-            if (BufferData is PressBufferData buf)
-                return buf;
-            return null;   
-        }
-        set => BufferData = value;
-    }
+    [Export] public PressBufferData PressBufferData = new();
 
     public ulong LastInputStart {get; private set;}
     public ulong LastInputStop {get; private set;}
     public bool Active {get; private set;}
+
+    protected override IBuffer<PressInput> Build()
+        => new PressBuffer(BufferData.Build<PressInput>(), PressBufferData);
 
     public override void DoSpec(PressInput input)
     {

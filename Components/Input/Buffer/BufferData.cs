@@ -1,8 +1,10 @@
 namespace GIAT.Components.Input.Buffer;
 
 using GIAT.Interface;
+using Godot;
 
-public interface BufferData<T> where T : IInput
+[GlobalClass]
+public abstract partial class BufferData: Resource
 {
-    public abstract IBuffer<T> Build();
+    public abstract IBuffer<T> Build<T>() where T : IInput;
 }
