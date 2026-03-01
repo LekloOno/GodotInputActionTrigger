@@ -6,6 +6,7 @@ using GIAT.Interface;
 using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
 using Godot.Collections;
+using GIAT.Nodes.Input.Handler;
 
 [Tool]
 public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T>
@@ -97,7 +98,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     {
         if (_consumeSuccessOnly)
             return SuccessDo();
-            
+
         return SimpleDo();
     }
 
