@@ -6,6 +6,7 @@ using GIAT.Components.Input.Handler;
 using GIAT.Nodes.Input.Type;
 using GIAT.Nodes.Input.Buffer;
 using GIAT.Interface;
+using GIAT.Nodes.Input.Producer;
 
 [GlobalClass, Tool]
 public partial class PressInputHandler : InputHandler<PressInput>
@@ -21,37 +22,39 @@ public partial class PressInputHandler : InputHandler<PressInput>
 
     private PressBufferData _pressBufferConfig = new PressBufferData();
 
-    public ulong LastInputStart {get; private set;}
-    public ulong LastInputStop {get; private set;}
-    public bool Active {get; private set;}
-
-    protected override IBuffer<PressInput> Build()
-        => new PressBuffer(Buffer.Build<PressInput>(), PressBufferConfig);
-
-    public override void DoSpec(PressInput input)
+    private PressInputProducer _pressProducer;
+    
+    private PressMode _pressMode;
+    [Export]
+    public PressMode PressMode
     {
-        switch (input)
+        get => _pressMode;
+        set
         {
-            case PressInput.Start:
-                LastInputStart = PHX_Time.ScaledTicksMsec;
-                Active = true;
-                break;
-            case PressInput.Stop:
-                LastInputStop = PHX_Time.ScaledTicksMsec;
-                Active = false;
-                break;
+            if (_pressMode == value)
+                return;
+
+            _pressMode = value;
+            SetProducer();
         }
     }
 
-    protected override void CheckChildrenSpec(){}
-
-    protected override void Process(InputEvent @event)
+    private void SetProducer()
     {
-        if (@event.IsEcho())
-            return;
-        if (@event.IsPressed())
-            Do(PressInput.Start);
-        else if (@event.IsReleased())
-            Do(PressInput.Stop);
+        _pressProducer = _pressMode.Producer();
+        _producer = _pressProducer;        
+    }
+
+    public ulong LastInputStart => _pressProducer.LastInputStart;
+    public ulong LastInputStop => _pressProducer.LastInputStop;
+    public bool Active => _pressProducer.Active;
+
+    protected override IBuffer<PressInput> Build() =>
+        new PressBuffer(Buffer.Build<PressInput>(), PressBufferConfig);
+
+    public override void _Ready()
+    {
+        SetProducer();
+        base._Ready();
     }
 }

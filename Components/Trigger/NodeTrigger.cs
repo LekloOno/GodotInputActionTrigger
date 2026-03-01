@@ -20,17 +20,21 @@ public abstract partial class NodeTrigger<T> : FreeTrigger
         if (GetParent() is not IAction<T> action)
             return;
 
+        // Avoid infinite recursion with Trigger actions
         if (action is NodeTrigger<T>)
             return;
 
         _actions = [action];
     }
 
+    /// <summary>
+    /// Some extended behavior on parent checking.
+    /// </summary>
+    /// <returns>Whether the extension successfully completed the check, thus not requiring further operations from the base.</returns>
     protected abstract void CheckParentSpec();
 
-    private void CheckChildren()
+    protected virtual void CheckChildren()
     {
-        CheckChildrenSpec();
         List<IAction<T>> actions = [];
         foreach(Node node in GetChildren())
             if (node is IAction<T> action)
@@ -41,14 +45,19 @@ public abstract partial class NodeTrigger<T> : FreeTrigger
         // Prevent _actions from being emptied.
         if (actions.Count != 0)
             _actions = actions;
+        else if (_actions.Count != 0 && _actions[0] != GetParent())
+            _actions = actions;
     }
-
-    protected abstract void CheckChildrenSpec();
 
     private void Unparent()
     {
         UnparentSpec();
-        _actions = [];
+         
+        if (_actions.Count == 0)
+            return;
+        
+        if (_actions[0] == GetParent())
+            _actions = [];
     }
 
     protected abstract void UnparentSpec();
@@ -57,7 +66,10 @@ public abstract partial class NodeTrigger<T> : FreeTrigger
     {
         CheckChildren();
         CheckParent();
+        EnterTreeSpec();
     }
+
+    protected abstract void EnterTreeSpec();
 
     public override sealed void _Notification(int what)
     {

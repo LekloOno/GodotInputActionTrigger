@@ -6,54 +6,50 @@ using GIAT.Interface;
 using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
 using Godot.Collections;
-using System.Linq;
 
 [Tool]
 public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T>
 {
     protected string _actionName = "";
     /// <summary>
-    /// Make the input trigger its actions autonomously.
+    /// Makes so the input handler consumes its own inputs.
     /// </summary>
-    private bool _autonomous = true;
+    private bool _consume = true;
     /// <summary>
     /// Makes so only successfull call to Do() consume used buffer input.
     /// </summary>
     [Export]
     private bool _consumeSuccessOnly = true;
+    /// <summary>
+    /// Makes so the input handler produces its own inputs
+    /// </summary>
+    private bool _produce = true;
 
-    private bool IsTrigger => _autonomous && _rootTrigger;
+    private bool _enabled = true;
+
+    public bool Enabled
+    {
+        get => _enabled;
+        set
+        {
+            _enabled = value;
+            SetProcessUnhandledInput();   
+        }
+    }
+
+    private void SetProcessUnhandledInput()
+        => SetProcessUnhandledInput(_produce && _enabled && _producer != null);
+
+    private bool IsTrigger => _consume && _rootTrigger;
 
     private bool _rootTrigger = false;
 
     public ulong LastInputStamp {get; private set;}
+    protected IInputProducer<T> _producer;
+    
     private IBuffer<T> _buffer = new EmptyBuffer<T>();
     
     public BufferData _bufferData;
-
-    /// <summary>
-    /// It is named buffer although it is the buffer data because the buffer itself
-    /// is not exposed to the editor. <br/>
-    /// <br/>
-    /// It implictly represents the buffer for the inspector-land.
-    /// </summary>
-    [Export]
-    public BufferData Buffer
-    {
-        get => _bufferData;
-        protected set
-        {
-            if (_bufferData == value)
-                return;
-
-            _bufferData = value;
-            
-            if (value == null)
-                _buffer = new EmptyBuffer<T>();
-            else
-                _buffer = Build();
-        }
-    }
 
     protected virtual IBuffer<T> Build()
         => _bufferData.Build<T>();
@@ -61,8 +57,17 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     private bool TriggerActions(T input)
     {
         foreach (IAction<T> action in _actions)
-            if (action.Do(input))
+        {
+            bool handled;
+
+            //if (action is IAction signal)
+            //    handled = signal.Do();
+            //else
+                handled = action.Do(input);
+            
+            if (handled)
                 return true;
+        }
         
         return false;
     }
@@ -92,26 +97,22 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     {
         if (_consumeSuccessOnly)
             return SuccessDo();
+            
         return SimpleDo();
     }
 
     public bool Do(T input)
     {
-        DoSpec(input);
+        if (!_producer.ProduceExternal(input))
+            return false;
+
         LastInputStamp = PHX_Time.ScaledTicksMsec;
         // Buffer in preamble, to ensure a consistent
         // produce - consume semantic.
-        _buffer.Buffer(input);
-        bool handled = IsTrigger && TriggerActions(input);
-
-        if (!handled)
+        if (!_buffer.Buffer(input))
             return false;
-
-        _buffer.Pop();
-        return true;
+        return Do();
     }
-
-    public abstract void DoSpec(T input);
 
     protected override void CheckParentSpec()
         => _rootTrigger = GetParent() is not ITrigger;
@@ -121,90 +122,26 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event.IsAction(_actionName))
-            Process(@event);
-    }
+        if (!@event.IsAction(_actionName))
+            return;
 
-    protected abstract void Process(InputEvent @event);
-
-
-    // +---------------------+
-    // |   INSPECTOR VIEW    |
-    // +---------------------+
-    // _______________________
-    public override Array<Dictionary> _GetPropertyList()
-    {
-        Array<Dictionary> properties = [];
+        if (!_producer.Produce(@event, out T input))
+            return;
         
-        properties.Add(InputActionProperty());
-
-        if (GetParent() is not ITrigger)
-            properties.Add(AutonomousProperty());
-
-
-        return properties;
+        if (!_buffer.Buffer(input))
+            return;
+        
+        if (IsTrigger)
+            Do();
     }
 
-    private Dictionary AutonomousProperty()
-        => new Dictionary
-            {
-                { "name", "_autonomous" },
-                { "type", (int)Variant.Type.Bool },
-                { "usage", (int)PropertyUsageFlags.Default }
-            };
-
-    private Dictionary InputActionProperty()
+    public override void _Ready()
     {
-        ConfigFile config = new();
-        config.Load("res://project.godot");
-
-        var actions = config.GetSectionKeys("input");
-
-        // Convert to comma-separated string for enum hint
-        string hintString = string.Join(",", actions);
-
-        return new Dictionary
-        {
-            { "name", nameof(_actionName) },
-            { "type", (int)Variant.Type.String },
-            { "usage", (int)PropertyUsageFlags.Default },
-            { "hint", (int)PropertyHint.Enum },
-            { "hint_string", hintString }
-        };
-    } 
-
-    public override bool _PropertyCanRevert(StringName property)
-    {
-        if (property == nameof(_autonomous))
-            return _autonomous != true;
-
-        return false;
+        SetProcessUnhandledInput();
     }
 
-    public override Variant _PropertyGetRevert(StringName property)
+    protected override void EnterTreeSpec()
     {
-        if (property == nameof(_autonomous))
-            return true;
-
-        return default;
-    }
-
-    public override Variant _Get(StringName property)
-    {
-        if (property == nameof(_actionName))
-            return _actionName;
-
-        return default;
-    }
-
-    public override bool _Set(StringName property, Variant value)
-    {
-        if (property == nameof(_actionName))
-        {
-            _actionName = value.AsString();
-            return true;
-        }
-
-        return false;
+        SetProcessUnhandledInput();   
     }
 }
