@@ -6,9 +6,18 @@ using Godot;
 using GIAT.Interface;
 
 [Tool]
-public abstract partial class NodeTrigger<T> : FreeTrigger
+public abstract partial class NodeTrigger<T> : FreeTrigger, IAction<T>
 {
     protected List<IAction<T>> _actions = [];
+
+    public bool Do(T input)
+    {
+        foreach (IAction<T> action in _actions)
+            if (action.Do(input))
+                return true;
+
+        return false;
+    }
 
     private void CheckParent()
     {

@@ -2,7 +2,7 @@ namespace GIAT.Interface;
 
 using Godot;
 
-public interface IInputProducer<T>
+public interface IProducer<T>
 {
     /// <summary>
     /// Tries to produce an input from the provided input event.

@@ -12,12 +12,12 @@ public partial class InputHandler<T>
     /// Makes so the input handler produces its own inputs
     /// </summary>
     [Export]
-    public bool Produce
+    public bool ProduceSelf
     {
-        get => _produce;
+        get => _produceSelf;
         set
         {
-            _produce = value;
+            _produceSelf = value;
             SetProcessUnhandledInput();
             NotifyPropertyListChanged();
         }
@@ -50,7 +50,7 @@ public partial class InputHandler<T>
     {
         Array<Dictionary> properties = [];
         
-        if (_produce)
+        if (_produceSelf)
             properties.Add(InputActionProperty());
 
         if (GetParent() is not ITrigger)
@@ -63,7 +63,7 @@ public partial class InputHandler<T>
     private Dictionary AutonomousProperty()
         => new Dictionary
             {
-                { "name", nameof(_consume) },
+                { "name", nameof(_consumeSelf) },
                 { "type", (int)Variant.Type.Bool },
                 { "usage", (int)PropertyUsageFlags.Default }
             };
@@ -90,15 +90,15 @@ public partial class InputHandler<T>
 
     public override bool _PropertyCanRevert(StringName property)
     {
-        if (property == nameof(_consume))
-            return _consume != true;
+        if (property == nameof(_consumeSelf))
+            return _consumeSelf != true;
 
         return false;
     }
 
     public override Variant _PropertyGetRevert(StringName property)
     {
-        if (property == nameof(_consume))
+        if (property == nameof(_consumeSelf))
             return true;
 
         return default;

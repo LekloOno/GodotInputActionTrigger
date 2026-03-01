@@ -5,17 +5,15 @@ using Godot;
 using GIAT.Interface;
 using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
-using Godot.Collections;
-using GIAT.Nodes.Input.Handler;
 
 [Tool]
-public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<T>
+public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IProducer<T>
 {
     protected string _actionName = "";
     /// <summary>
     /// Makes so the input handler consumes its own inputs.
     /// </summary>
-    private bool _consume = true;
+    private bool _consumeSelf = true;
     /// <summary>
     /// Makes so only successfull call to Do() consume used buffer input.
     /// </summary>
@@ -24,7 +22,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     /// <summary>
     /// Makes so the input handler produces its own inputs
     /// </summary>
-    private bool _produce = true;
+    private bool _produceSelf = true;
 
     private bool _enabled = true;
 
@@ -39,14 +37,14 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     }
 
     private void SetProcessUnhandledInput()
-        => SetProcessUnhandledInput(_produce && _enabled && _producer != null);
+        => SetProcessUnhandledInput(_produceSelf && _enabled && _producer != null);
 
-    private bool IsTrigger => _consume && _rootTrigger;
+    private bool IsTrigger => _consumeSelf && _rootTrigger;
 
     private bool _rootTrigger = false;
 
     public ulong LastInputStamp {get; private set;}
-    protected IInputProducer<T> _producer;
+    protected IProducer<T> _producer;
     
     private IBuffer<T> _buffer = new EmptyBuffer<T>();
     
@@ -58,17 +56,8 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     private bool TriggerActions(T input)
     {
         foreach (IAction<T> action in _actions)
-        {
-            bool handled;
-
-            //if (action is IAction signal)
-            //    handled = signal.Do();
-            //else
-                handled = action.Do(input);
-            
-            if (handled)
+            if (action.Do(input))
                 return true;
-        }
         
         return false;
     }
@@ -102,19 +91,6 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         return SimpleDo();
     }
 
-    public bool Do(T input)
-    {
-        if (!_producer.ProduceExternal(input))
-            return false;
-
-        LastInputStamp = PHX_Time.ScaledTicksMsec;
-        // Buffer in preamble, to ensure a consistent
-        // produce - consume semantic.
-        if (!_buffer.Buffer(input))
-            return false;
-        return Do();
-    }
-
     protected override void CheckParentSpec()
         => _rootTrigger = GetParent() is not ITrigger;
 
@@ -122,19 +98,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         => _rootTrigger = true;
 
     public override void _UnhandledInput(InputEvent @event)
-    {
-        if (!@event.IsAction(_actionName))
-            return;
-
-        if (!_producer.Produce(@event, out T input))
-            return;
-        
-        if (!_buffer.Buffer(input))
-            return;
-        
-        if (IsTrigger)
-            Do();
-    }
+        => Produce(@event, out _);
 
     public override void _Ready()
     {
@@ -144,5 +108,40 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     protected override void EnterTreeSpec()
     {
         SetProcessUnhandledInput();   
+    }
+
+    public bool Produce(InputEvent @event, out T input)
+    {
+        input = default;
+        if (!@event.IsAction(_actionName))
+            return false;
+
+        if (!_producer.Produce(@event, out input))
+            return false;
+        
+        if (!_buffer.Buffer(input))
+            return false;
+        
+        if (IsTrigger)
+            Do();
+        
+        return true;
+    }
+
+    public bool ProduceExternal(T input)
+    {
+        if (!_producer.ProduceExternal(input))
+            return false;
+
+        LastInputStamp = PHX_Time.ScaledTicksMsec;
+        // Buffer in preamble, to ensure a consistent
+        // produce - consume semantic.
+        if (!_buffer.Buffer(input))
+            return false;
+
+        if (IsTrigger)
+            Do();
+
+        return true;
     }
 }

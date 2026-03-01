@@ -5,7 +5,7 @@ using Godot;
 using GIAT.Nodes.Input.Type;
 using GIAT.Interface;
 
-public abstract class PressInputProducer : IInputProducer<PressInput>
+public abstract class PressInputProducer : IProducer<PressInput>
 {
     public ulong LastInputStart {get; protected set;}
     public ulong LastInputStop {get; protected set;}
@@ -30,23 +30,51 @@ public abstract class PressInputProducer : IInputProducer<PressInput>
     {
         return input switch
         {
-            PressInput.Start => ProcessPressed(out _),
-            PressInput.Stop => ProcessReleased(out _),
+            PressInput.Start => ProduceExternalStart(),
+            PressInput.Stop => ProduceExternalStop(),
             _ => false,
         };
     }
 
-    protected PressInput ProduceStart()
+    private bool ProduceExternalStart()
+    {
+        if (Active)
+            return false;
+
+        StampStart();
+        return true;
+    }
+
+    private bool ProduceExternalStop()
+    {
+        if (!Active)
+            return false;
+
+        StampStop();
+        return true;
+    }
+
+    private void StampStart()
     {
         LastInputStart = PHX_Time.ScaledTicksMsec;
         Active = true;
+    }
+
+    private void StampStop()
+    {
+        LastInputStop = PHX_Time.ScaledTicksMsec;
+        Active = false;
+    }
+
+    protected PressInput ProduceStart()
+    {
+        StampStart();
         return PressInput.Start;
     }
 
     protected PressInput ProduceStop()
     {
-        LastInputStop = PHX_Time.ScaledTicksMsec;
-        Active = false;
+        StampStop();
         return PressInput.Stop;
     }
 
