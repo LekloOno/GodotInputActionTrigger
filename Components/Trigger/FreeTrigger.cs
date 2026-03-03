@@ -5,4 +5,7 @@ using GIAT.Interface;
 
 
 [GlobalClass]
-public abstract partial class FreeTrigger : Node, ITrigger {}
+public abstract partial class FreeTrigger : Node, ITransmitter
+{
+    public abstract bool Transmit();
+}

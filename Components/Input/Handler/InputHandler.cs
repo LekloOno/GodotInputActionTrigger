@@ -7,7 +7,7 @@ using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
 
 [Tool]
-public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IProducer<T>
+public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<InputEvent>
 {
     protected string _actionName = "";
     /// <summary>
@@ -40,108 +40,77 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IProduc
         => SetProcessUnhandledInput(_produceSelf && _enabled && _producer != null);
 
     private bool IsTrigger => _consumeSelf && _rootTrigger;
-
+    public ulong LastInputStamp => _producer.LastInputStamp;
     private bool _rootTrigger = false;
 
-    public ulong LastInputStamp {get; private set;}
     protected IProducer<T> _producer;
-    
-    private IBuffer<T> _buffer = new EmptyBuffer<T>();
-    
     public BufferData _bufferData;
+    private IBuffer<T> _buffer = new EmptyBuffer<T>();
 
     protected virtual IBuffer<T> Build()
         => _bufferData.Build<T>();
 
-    private bool TriggerActions(T input)
-    {
-        foreach (IAction<T> action in _actions)
-            if (action.Do(input))
-                return true;
-        
-        return false;
-    }
-
-    private bool SuccessDo()
-    {
-        if (!_buffer.Peak(out T input))
-            return false;
-
-        bool handled = TriggerActions(input);
-
-        if (handled)
-            _buffer.Pop();
-
-        return handled;
-    }
-
-    private bool SimpleDo()
-    {
-        if (!_buffer.Consume(out T input))
-            return false;
-
-        return TriggerActions(input);
-    }
-
-    public bool Do()
-    {
-        if (_consumeSuccessOnly)
-            return SuccessDo();
-
-        return SimpleDo();
-    }
-
     protected override void CheckParentSpec()
-        => _rootTrigger = GetParent() is not ITrigger;
+        => _rootTrigger = GetParent() is not ITransmitter;
 
     protected override void UnparentSpec()
         => _rootTrigger = true;
 
     public override void _UnhandledInput(InputEvent @event)
-        => Produce(@event, out _);
+        => Do(@event);
 
     public override void _Ready()
-    {
-        SetProcessUnhandledInput();
-    }
+        => SetProcessUnhandledInput();
 
     protected override void EnterTreeSpec()
-    {
-        SetProcessUnhandledInput();   
-    }
+        => SetProcessUnhandledInput();
 
-    public bool Produce(InputEvent @event, out T input)
+    public bool Do(InputEvent @event)
     {
-        input = default;
         if (!@event.IsAction(_actionName))
             return false;
 
-        if (!_producer.Produce(@event, out input))
+        if(!_produceSelf)
             return false;
-        
-        if (!_buffer.Buffer(input))
+
+        if (_producer == null)
             return false;
-        
-        if (IsTrigger)
-            Do();
-        
+
+        if(!_producer.Produce(@event, out T input))
+            return false;
+
+        if (!IsTrigger || !Do(input))
+            return false;
+
+        //GetViewport().SetInputAsHandled();
+        // This is linked to the problem mentionned below.
         return true;
     }
 
-    public bool ProduceExternal(T input)
+    public override bool Do(T input)
     {
-        if (!_producer.ProduceExternal(input))
-            return false;
+        if (Transmit(input))
+            return true;
 
-        LastInputStamp = PHX_Time.ScaledTicksMsec;
-        // Buffer in preamble, to ensure a consistent
-        // produce - consume semantic.
-        if (!_buffer.Buffer(input))
-            return false;
+        // Problem spotted :
+        // Buffer might need to be called from the exterior.
+        // If an action fails, it will instantly try to buffer input,
+        // although one of its siblings actions might have succeeded.
+        // We should buffer if none did, but then where ?
+        // In the parent ? then we moved the problem up
 
-        if (IsTrigger)
-            Do();
+        // Gotta figure this out !
+        if (_consumeSuccessOnly)
+            return _buffer.Buffer(input);
 
         return true;
+    }
+
+    public bool Do()
+    {
+        if (!_buffer.Consume(out T input))
+            return false;
+
+        return Do(input);
     }
 }

@@ -6,11 +6,14 @@ using Godot;
 using GIAT.Interface;
 
 [Tool]
-public abstract partial class NodeTrigger<T> : FreeTrigger, IAction<T>
+public abstract partial class NodeTrigger<T> : Node, ITransmitter<T>, IAction<T>
 {
     protected List<IAction<T>> _actions = [];
 
-    public bool Do(T input)
+    public virtual bool Do(T input)
+        => Transmit(input);
+
+    public bool Transmit(T input)
     {
         foreach (IAction<T> action in _actions)
             if (action.Do(input))

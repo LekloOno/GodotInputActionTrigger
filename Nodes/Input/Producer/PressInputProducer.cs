@@ -3,15 +3,15 @@ namespace GIAT.Nodes.Input.Producer;
 using Godot;
 
 using GIAT.Nodes.Input.Type;
-using GIAT.Interface;
+using GIAT.Components.Input.Producer;
 
-public abstract class PressInputProducer : IProducer<PressInput>
+public abstract class PressInputProducer : Producer<PressInput>
 {
     public ulong LastInputStart {get; protected set;}
     public ulong LastInputStop {get; protected set;}
     public bool Active {get; protected set;}
 
-    public bool Produce(InputEvent @event, out PressInput input)
+    public override bool ProduceInternal(InputEvent @event, out PressInput input)
     {
         input = default;
         if (@event.IsEcho())
@@ -26,55 +26,17 @@ public abstract class PressInputProducer : IProducer<PressInput>
         return false;
     }
 
-    public bool ProduceExternal(PressInput input)
-    {
-        return input switch
-        {
-            PressInput.Start => ProduceExternalStart(),
-            PressInput.Stop => ProduceExternalStop(),
-            _ => false,
-        };
-    }
-
-    private bool ProduceExternalStart()
-    {
-        if (Active)
-            return false;
-
-        StampStart();
-        return true;
-    }
-
-    private bool ProduceExternalStop()
-    {
-        if (!Active)
-            return false;
-
-        StampStop();
-        return true;
-    }
-
-    private void StampStart()
-    {
-        LastInputStart = PHX_Time.ScaledTicksMsec;
-        Active = true;
-    }
-
-    private void StampStop()
-    {
-        LastInputStop = PHX_Time.ScaledTicksMsec;
-        Active = false;
-    }
-
     protected PressInput ProduceStart()
     {
-        StampStart();
+        LastInputStart = Time.GetTicksMsec();
+        Active = true;
         return PressInput.Start;
     }
 
     protected PressInput ProduceStop()
     {
-        StampStop();
+        LastInputStop = Time.GetTicksMsec();
+        Active = false;
         return PressInput.Stop;
     }
 

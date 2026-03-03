@@ -53,7 +53,7 @@ public partial class InputHandler<T>
         if (_produceSelf)
             properties.Add(InputActionProperty());
 
-        if (GetParent() is not ITrigger)
+        if (GetParent() is not ITransmitter)
             properties.Add(AutonomousProperty());
 
 
