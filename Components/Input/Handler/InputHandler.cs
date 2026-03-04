@@ -5,10 +5,15 @@ using Godot;
 using GIAT.Interface;
 using GIAT.Components.Trigger;
 using GIAT.Components.Input.Buffer;
+using System.Collections.Generic;
+using System;
+using GIAT.Components.Input.Dispatcher;
 
 [Tool]
-public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction<InputEvent>
+public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IInputStateHandler
 {
+    private List<IInputStateHandler> _inputHandlers = [];
+
     protected string _actionName = "";
     /// <summary>
     /// Makes so the input handler consumes its own inputs.
@@ -47,47 +52,91 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
     public BufferData _bufferData;
     private IBuffer<T> _buffer = new EmptyBuffer<T>();
 
-    protected virtual IBuffer<T> Build()
-        => _bufferData.Build<T>();
-
-    protected override void CheckParentSpec()
-        => _rootTrigger = GetParent() is not ITransmitter;
-
-    protected override void UnparentSpec()
-        => _rootTrigger = true;
-
-    public override void _UnhandledInput(InputEvent @event)
-        => Do(@event);
-
     public override void _Ready()
         => SetProcessUnhandledInput();
 
     protected override void EnterTreeSpec()
         => SetProcessUnhandledInput();
 
-    public bool Do(InputEvent @event)
+
+    public bool Handle(InputState inputState, InputEvent @event)
     {
-        if (!@event.IsAction(_actionName))
-            return false;
-
-        if(!_produceSelf)
-            return false;
-
-        if (_producer == null)
-            return false;
-
-        if(!_producer.Produce(@event, out T input))
-            return false;
-
-        if (!IsTrigger || !Do(input))
-            return false;
-
-        //GetViewport().SetInputAsHandled();
-        // This is linked to the problem mentionned below.
-        return true;
+        bool handled = HandleInternal(inputState, @event);
+        if (handled)
+            inputState.SetHandled();
+        
+        return handled;
     }
 
-    public override bool Do(T input)
+    public bool HandleInternal(InputState inputState, InputEvent @event)
+    {
+        if (!@event.IsAction(_actionName))
+            return Transmit(inputState, @event);
+
+        if(!_produceSelf)
+            return Transmit(inputState, @event);
+
+        if (_producer == null)
+            return Transmit(inputState, @event);
+
+        if(!_producer.Produce(inputState, @event, out IInput<T> input))
+            return Transmit(inputState, @event);
+
+        if(Transmit(inputState, @event, input))
+            return true;
+
+        _buffer.Buffer(input);
+        return false;
+    }
+
+    private bool Transmit(InputState inputState, InputEvent @event, IInput<T> input)
+    {
+        if (_consumeSelf && input.Retrieve(out T signal))
+        {
+            if (HandlerTransmit(inputState, @event, signal))
+                return true;
+        }
+        else
+        {
+            if (Transmit(inputState, @event))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HandlerTransmit(InputState inputState, InputEvent @event, T signal)
+    {
+        foreach (Node node in GetChildren())
+        {
+            if (node is IInputStateHandler inputHandler)
+            {
+                if (inputHandler.Handle(inputState, @event))
+                    return true;
+            }
+            else if (node is IAction<T> action)
+            {
+                if (action.Do(signal))
+                {
+                    
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    public bool Transmit(InputState state, InputEvent @event)
+    {
+        foreach (IInputStateHandler inputHandler in _inputHandlers)
+            if (inputHandler.Handle(state, @event))
+                return true;
+
+        return false;
+    }
+
+    public override bool Do(IInput<T> input)
     {
         if (Transmit(input))
             return true;
@@ -100,6 +149,8 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
         // In the parent ? then we moved the problem up
 
         // Gotta figure this out !
+
+        // Maybe never buffer the input i get sent, only the one i produce ?
         if (_consumeSuccessOnly)
             return _buffer.Buffer(input);
 
@@ -108,7 +159,7 @@ public abstract partial class InputHandler<T> : NodeTrigger<T>, IAction, IAction
 
     public bool Do()
     {
-        if (!_buffer.Consume(out T input))
+        if (!_buffer.Consume(out IInput<T> input))
             return false;
 
         return Do(input);

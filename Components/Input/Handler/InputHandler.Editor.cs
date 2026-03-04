@@ -45,6 +45,24 @@ public partial class InputHandler<T>
                 _buffer = Build();
         }
     }
+
+    protected virtual IBuffer<T> Build()
+        => _bufferData.Build<T>();
+
+    protected override void CheckParentSpec()
+        => _rootTrigger = GetParent() is not ITransmitter<InputEvent>;
+
+    protected override void UnparentSpec()
+        => _rootTrigger = true;
+
+    protected override void CheckChildren()
+    {
+        base.CheckChildren();
+        _inputHandlers = [];
+        foreach(Node node in GetChildren())
+            if (node is IInputStateHandler handler)
+                _inputHandlers.Add(handler);
+    }
     
     public override Array<Dictionary> _GetPropertyList()
     {
