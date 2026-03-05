@@ -1,5 +1,6 @@
 namespace GIAT.Components.Input.Dispatcher;
 
+using System;
 using GIAT.Interface;
 
 /// <summary>
@@ -17,17 +18,15 @@ public class InputState()
         => inputState.Handled;
 }
 
-public class Input<T>(T newInput, InputState inputState) : IInput<T>
+public class Input<T>(T newSignal, InputState inputState) : IInput<T>
 {
-    private readonly T _input = newInput;
+    public T Signal {get;} = newSignal;
     public InputState Handled {get; private set;} = inputState;
-
-    public bool Retrieve(out T input)
-    {
-        input = _input;
-        return Handled;
-    }
+    public event Action<Input<T>> OnHandle;
 
     public void SetHandled()
-        => Handled.SetHandled();
+    {
+        Handled.SetHandled();
+        OnHandle?.Invoke(this);
+    }
 }

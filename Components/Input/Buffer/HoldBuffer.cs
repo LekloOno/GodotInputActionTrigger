@@ -1,5 +1,7 @@
 namespace GIAT.Components.Input.Buffer;
 
+using System.Diagnostics.CodeAnalysis;
+using GIAT.Components.Input.Dispatcher;
 using GIAT.Interface;
 
 /// <summary>
@@ -8,22 +10,45 @@ using GIAT.Interface;
 /// </summary>
 /// <typeparam name="T"></typeparam>
 /// <param name="innerBuffer"></param>
-public class HoldBuffer<T>(SimpleBuffer<T> innerBuffer) : IBuffer<T>
+public class HoldBuffer<T>(SimpleBuffer<T> innerBuffer) : BufferBase<T>
 {
-    public void Clear()
-        => innerBuffer.Clear();
 
     public void Pop() {}
 
-    public virtual bool Buffer(T input)
+    public virtual bool Buffer(IInput<T> input)
         => innerBuffer.Buffer(input);
 
-    public bool Consume(out T input)
-        => innerBuffer.Peak(out input);
+    public override void Clear()
+        => innerBuffer.Clear();
 
-    public bool Peak(out T input)
-        => innerBuffer.Peak(out input);
-
-    public bool IsEmpty()
+    public override bool IsEmpty()
         => innerBuffer.IsEmpty();
+
+    public override bool Peek([MaybeNullWhen(false)] out Input<T> input)
+        => innerBuffer.Peek(out input);
+
+    protected override bool ConsumeSpec([MaybeNullWhen(false)] out Input<T> input)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    protected override bool ConsumeSpec(Input<T> input)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    protected override bool BufferSpec(Input<T> input)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    protected override void PopInputSpec(Input<T> input)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    protected override bool PopSpec([MaybeNullWhen(false)] out Input<T> input)
+    {
+        throw new System.NotImplementedException();
+    }
 }

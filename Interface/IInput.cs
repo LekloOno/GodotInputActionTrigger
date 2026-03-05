@@ -1,3 +1,5 @@
+using System;
+
 namespace GIAT.Interface;
 
 /// <summary>
@@ -6,12 +8,7 @@ namespace GIAT.Interface;
 /// <typeparam name="T">The stored input type.</typeparam>
 public interface IInput<T>
 {
-    /// <summary>
-    /// Tries to retrieve the T input.
-    /// </summary>
-    /// <param name="input">The (possibly unvalid) retrieved input</param>
-    /// <returns>Whether the retrieved input is valid.</returns>
-    bool Retrieve(out T input);
+    T Signal {get;}
     /// <summary>
     /// Marks the input as handled, making it unvalid for further use.
     /// </summary>

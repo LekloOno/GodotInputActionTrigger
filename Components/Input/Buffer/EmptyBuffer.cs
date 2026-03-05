@@ -1,24 +1,42 @@
 namespace GIAT.Components.Input.Buffer;
 
-using GIAT.Interface;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using GIAT.Components.Input.Dispatcher;
 
-public class EmptyBuffer<T> : IBuffer<T>
+public class EmptyBuffer<T> : BufferBase<T>
 {
-    public bool Buffer(T input)
-        => false;
-
-    public bool Consume(out T input)
+    protected override bool ConsumeSpec(out Input<T> input)
     {
         input = default;
         return false;   
     }
 
-    public bool IsEmpty()
+    public override bool IsEmpty()
         => true;
 
-    public bool Peak(out T input) =>
-        Consume(out input);
+    public override bool Peek([MaybeNullWhen(false)] out Input<T> input)
+    {   
+        input = default;
+        return false;
+    }
 
-    public void Clear() {}
-    public void Pop() {}
+    protected override void ClearSpec() {}
+
+    protected override bool ConsumeSpec(Input<T> input)
+        => false;
+
+    protected override bool BufferSpec(Input<T> input)
+        => false;
+
+    protected override void PopInputSpec(Input<T> input){}
+
+    protected override bool PopSpec([MaybeNullWhen(false)] out Input<T> input)
+    {
+        input = default;
+        return false;
+    }
+
+    protected override List<Input<T>> GetInputs()
+        => [];
 }

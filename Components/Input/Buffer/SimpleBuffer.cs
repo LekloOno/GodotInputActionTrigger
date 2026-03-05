@@ -1,11 +1,14 @@
 namespace GIAT.Components.Input.Buffer;
 
-using GIAT.Interface;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using GIAT.Components.Input.Dispatcher;
+using Godot;
 
-public class SimpleBuffer<T>(SimpleBufferData data) : IBuffer<T>
+public class SimpleBuffer<T>(SimpleBufferData data) : BufferBase<T>
 {
     protected readonly SimpleBufferData _data = data;
-    private T _buffered = default;
+    private Input<T> _buffered = default;
     public bool _containsInput = false;
 
     private ulong _timeStamp;
@@ -14,43 +17,69 @@ public class SimpleBuffer<T>(SimpleBufferData data) : IBuffer<T>
         => _data.UseLifeTime 
         && PHX_Time.ScaledTicksMsec - _timeStamp > _data.LifeTime;
 
-    public void Clear()
-    {
-        _buffered = default;
-        _containsInput = false;
-    }
+    protected override void ClearSpec()
+        => _containsInput = false;
 
-    public void Pop() => Clear();
-
-    public virtual bool Buffer(T input)
-    {
-        if (input is null)
-            return false;
-
-        _timeStamp = PHX_Time.ScaledTicksMsec;
-        _buffered = input;
-        _containsInput = true;
-        return true;
-    }
-
-    public bool Consume(out T input)
-    {
-        if (!Peak(out input))
-            return false;
-
-        Clear();
-        return true;
-    }
-
-    public bool Peak(out T input)
+    public override bool Peek(out Input<T> input)
     {
         input = _buffered;
         if (Expired())
-            Clear();
+            Pop();
 
         return _containsInput;
     }
 
-    public bool IsEmpty() =>
+    public override bool IsEmpty() =>
         Expired() || !_containsInput;
+
+    protected override bool ConsumeSpec(out Input<T> input)
+    {
+        if (!Peek(out input))
+            return false;
+        
+        _containsInput = false;
+        return true;
+    }
+
+    protected override bool ConsumeSpec(Input<T> input)
+    {
+        if (!Peek(out _))
+            return false;
+
+        if (_buffered != input)
+            return false;
+        
+        _containsInput = false;
+        return true;
+    }
+
+    protected override bool BufferSpec(Input<T> input)
+    {
+        if (input is null)
+            return false;
+
+        _timeStamp = Time.GetTicksMsec();
+        _buffered = input; 
+        _containsInput = true;
+        return true;
+    }
+
+    protected override void PopInputSpec(Input<T> input)
+    {
+        if (_buffered == input)
+            _containsInput = false;
+    }
+
+    protected override bool PopSpec([MaybeNullWhen(false)] out Input<T> input)
+    {
+        input = _buffered;
+        if (!_containsInput)
+            return false;
+        
+        _containsInput = false;
+        return true;
+    }
+
+    protected override List<Input<T>> GetInputs()
+        => [_buffered];
 }
