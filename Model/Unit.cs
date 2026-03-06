@@ -1,4 +1,4 @@
-namespace GIAT.Nodes.Input.Type;
+namespace GIAT.Model;
 
 public readonly struct Unit
 {
